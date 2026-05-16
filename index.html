@@ -3,11 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-
 <title>VibeSite</title>
 
 <style>
-
 *{
 margin:0;
 padding:0;
@@ -49,14 +47,13 @@ overflow:hidden;
 border:1px solid #00aa44;
 border-radius:10px;
 padding:10px;
-overflow:hidden;
 display:flex;
 flex-direction:column;
+overflow:hidden;
 }
 
 .label{
-margin-bottom:8px;
-font-size:14px;
+margin-bottom:10px;
 }
 
 .row{
@@ -72,12 +69,12 @@ background:black;
 border:1px solid #00ff66;
 color:#00ff66;
 padding:10px;
-outline:none;
 border-radius:8px;
+outline:none;
 }
 
 button{
-width:90px;
+width:70px;
 background:#001500;
 border:1px solid #00ff66;
 color:#00ff66;
@@ -85,7 +82,7 @@ border-radius:8px;
 }
 
 button:hover{
-box-shadow:0 0 12px #00ff66;
+box-shadow:0 0 10px #00ff66;
 }
 
 #code{
@@ -109,30 +106,21 @@ border-radius:8px;
 }
 
 @media(max-width:768px){
+.main{
+grid-template-columns:1fr;
+}
 
 .top{
 font-size:18px;
 height:55px;
 }
 
-.main{
-grid-template-columns:1fr;
-}
-
 #input{
 height:45px;
-font-size:14px;
 }
-
-button{
-width:70px;
 }
-
-}
-
 </style>
 </head>
-
 <body>
 
 <div class="top">
@@ -142,111 +130,69 @@ width:70px;
 <div class="main">
 
 <div class="left">
-
 <div class="label">
 user@vibesite:~$
 </div>
 
 <div class="row">
-
-<input
-id="input"
-placeholder="검은색 포트폴리오 사이트 만들어줘"
->
-
-<button onclick="generate()">
-생성
-</button>
-
+<input id="input" placeholder="검은색 게임 사이트 만들어줘">
+<button onclick="generate()">생성</button>
 </div>
 
-<textarea
-id="code"
-readonly
-placeholder="생성된 코드가 여기 표시됨">
-</textarea>
+<textarea id="code" readonly placeholder="생성된 코드"></textarea>
 
 </div>
 
 <div class="right">
-
 <div class="label">
 실시간 미리보기
 </div>
 
-<iframe
-id="preview">
-</iframe>
-
+<iframe id="preview"></iframe>
 </div>
 
 </div>
 
 <script>
-
-const input=
-document.getElementById(
-"input"
-);
+const input=document.getElementById("input");
 
 async function generate(){
 
-const prompt=
-input.value.trim();
+const prompt=input.value.trim();
 
 if(!prompt)return;
 
-document
-.getElementById(
-"code"
-)
-.value=
-"생성중...";
+const code=document.getElementById("code");
+
+code.value="생성중...";
 
 try{
 
-const res=
-await fetch(
+const res=await fetch(
 "/generate",
 {
 method:"POST",
-
 headers:{
 "Content-Type":"application/json"
 },
-
 body:JSON.stringify({
 prompt
 })
+}
+);
 
-});
+const data=await res.json();
 
-const data=
-await res.json();
-
-document
-.getElementById(
-"code"
-)
-.value=
-data.code;
+code.value=data.code;
 
 document
-.getElementById(
-"preview"
-)
-.srcdoc=
-data.code;
+.getElementById("preview")
+.srcdoc=data.code;
 
 }
 catch{
 
-document
-.getElementById(
-"code"
-)
-.value=
-"오류 발생";
+code.value="오류 발생";
 
 }
 
@@ -255,13 +201,10 @@ document
 input.addEventListener(
 "keypress",
 e=>{
-
-if(e.key==="Enter")
+if(e.key==="Enter"){
 generate();
-
 }
-);
-
+});
 </script>
 
 </body>
