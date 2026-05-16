@@ -1,1 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
+<title>VibeSite</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:monospace;
+}
+
+body{
+background:#000;
+color:#00ff66;
+height:100dvh;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+}
+
+.top{
+height:60px;
+border-bottom:1px solid #00aa44;
+display:flex;
+align-items:center;
+padding:0 15px;
+font-size:24px;
+font-weight:bold;
+box-shadow:0 0 8px #00ff66;
+flex-shrink:0;
+}
+
+.main{
+flex:1;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:10px;
+overflow:hidden;
+}
+
+.left,.right{
+border:1px solid #00aa44;
+border-radius:10px;
+padding:10px;
+overflow:hidden;
+display:flex;
+flex-direction:column;
+}
+
+.label{
+margin-bottom:8px;
+font-size:14px;
+}
+
+.row{
+display:flex;
+gap:8px;
+margin-bottom:10px;
+}
+
+#input{
+flex:1;
+height:50px;
+background:black;
+border:1px solid #00ff66;
+color:#00ff66;
+padding:10px;
+outline:none;
+border-radius:8px;
+}
+
+button{
+width:90px;
+background:#001500;
+border:1px solid #00ff66;
+color:#00ff66;
+border-radius:8px;
+}
+
+button:hover{
+box-shadow:0 0 12px #00ff66;
+}
+
+#code{
+flex:1;
+width:100%;
+background:black;
+color:#00ff66;
+border:1px solid #00ff66;
+padding:10px;
+resize:none;
+border-radius:8px;
+outline:none;
+}
+
+iframe{
+flex:1;
+width:100%;
+border:none;
+background:white;
+border-radius:8px;
+}
+
+@media(max-width:768px){
+
+.top{
+font-size:18px;
+height:55px;
+}
+
+.main{
+grid-template-columns:1fr;
+}
+
+#input{
+height:45px;
+font-size:14px;
+}
+
+button{
+width:70px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="top">
+> VibeSite_
+</div>
+
+<div class="main">
+
+<div class="left">
+
+<div class="label">
+user@vibesite:~$
+</div>
+
+<div class="row">
+
+<input
+id="input"
+placeholder="검은색 포트폴리오 사이트 만들어줘"
+>
+
+<button onclick="generate()">
+생성
+</button>
+
+</div>
+
+<textarea
+id="code"
+readonly
+placeholder="생성된 코드가 여기 표시됨">
+</textarea>
+
+</div>
+
+<div class="right">
+
+<div class="label">
+실시간 미리보기
+</div>
+
+<iframe
+id="preview">
+</iframe>
+
+</div>
+
+</div>
+
+<script>
+
+const input=
+document.getElementById(
+"input"
+);
+
+async function generate(){
+
+const prompt=
+input.value.trim();
+
+if(!prompt)return;
+
+document
+.getElementById(
+"code"
+)
+.value=
+"생성중...";
+
+try{
+
+const res=
+await fetch(
+"/generate",
+{
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+prompt
+})
+
+});
+
+const data=
+await res.json();
+
+document
+.getElementById(
+"code"
+)
+.value=
+data.code;
+
+document
+.getElementById(
+"preview"
+)
+.srcdoc=
+data.code;
+
+}
+catch{
+
+document
+.getElementById(
+"code"
+)
+.value=
+"오류 발생";
+
+}
+
+}
+
+input.addEventListener(
+"keypress",
+e=>{
+
+if(e.key==="Enter")
+generate();
+
+}
+);
+
+</script>
+
+</body>
+</html>
