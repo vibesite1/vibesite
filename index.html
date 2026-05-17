@@ -106,6 +106,18 @@ background:white;
 border-radius:8px;
 }
 
+#deployLink{
+margin-top:10px;
+padding:10px;
+border:1px solid #00ff66;
+display:none;
+word-break:break-all;
+}
+
+a{
+color:#00ff66;
+}
+
 @media(max-width:768px){
 
 .main{
@@ -161,6 +173,8 @@ placeholder="게임 사이트 만들어줘"
 id="code"
 placeholder="AI 코드 수정 가능">
 </textarea>
+
+<div id="deployLink"></div>
 
 </div>
 
@@ -292,10 +306,37 @@ code
 const data=
 await res.json();
 
-alert(
-"배포 완료:\n"+
+try{
+
+await navigator
+.clipboard
+.writeText(
 data.url
 );
+
+}catch{}
+
+const box=
+document
+.getElementById(
+"deployLink"
+);
+
+box.style.display=
+"block";
+
+box.innerHTML=`
+배포 완료 🎉<br><br>
+
+<a href="${data.url}"
+target="_blank">
+${data.url}
+</a>
+
+<br><br>
+
+(링크 자동 복사됨)
+`;
 
 }
 
