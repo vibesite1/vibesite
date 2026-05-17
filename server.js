@@ -5,84 +5,123 @@ app.use(express.json());
 app.use(express.static("./"));
 
 /* =========================
-   AI 생성 (Gemini)
-========================= */
-app.post("/generate", async (req, res) => {
-
-try {
-
-const prompt = req.body.prompt;
-
-const finalPrompt = `
-너는 VibeSites AI다.
-완전한 HTML 웹사이트를 생성해라.
-
-규칙:
-- HTML만 출력
-- style + script 포함
-- 설명 금지
-- 모바일 대응
-
-요청:
-${prompt}
-`;
-
-const response = await fetch(
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-{
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({
-contents: [{ parts: [{ text: finalPrompt }] }]
-})
-}
-);
-
-const data = await response.json();
-
-const code =
-data?.candidates?.[0]?.content?.parts?.[0]?.text
-|| "생성 실패";
-
-res.json({ code });
-
-} catch (e) {
-res.json({ code: "AI 오류: " + (e?.message || e) });
-}
-
-});
-
-
-/* =========================
-   GitHub 배포
+   AI + 이름 생성 + 배포
 ========================= */
 app.post("/deploy", async (req, res) => {
 
 try {
 
-const code = req.body.code;
+const codePrompt = req.body.code || req.body.prompt;
 
-const repoName = "vibesites-" + Date.now();
+/* =========================
+   1. HTML 생성 (Gemini)
+========================= */
+const aiRes = await fetch(
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+{
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+contents: [
+{
+parts: [
+{
+text: `
+너는 웹사이트 생성 AI다.
+완전한 HTML 하나만 출력해라.
+
+규칙:
+- HTML + CSS + JS 포함
+- 설명 금지
+- 모바일 대응
+
+요청:
+${codePrompt}
+`
+}
+]
+}
+]
+})
+}
+);
+
+const aiData = await aiRes.json();
+
+const html =
+aiData?.candidates?.[0]?.content?.parts?.[0]?.text
+|| "<h1>생성 실패</h1>";
+
+/* =========================
+   2. 사이트 이름 생성
+========================= */
+const nameRes = await fetch(
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+{
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+contents: [
+{
+parts: [
+{
+text: `
+웹사이트 이름 하나 만들어줘.
+
+규칙:
+- 영어 소문자
+- 짧게 (2~3단어)
+- 공백 없이 하이픈
+- 예: neon-clicker, dark-game
+
+주제:
+${codePrompt}
+`
+}
+]
+}
+]
+})
+}
+);
+
+const nameData = await nameRes.json();
+
+let siteName =
+nameData?.candidates?.[0]?.content?.parts?.[0]?.text
+?.trim()
+?.toLowerCase()
+?.replace(/\s/g, "-")
+?.replace(/[^a-z0-9-]/g, "");
+
+if (!siteName) siteName = "site";
+
+/* =========================
+   3. repo 이름 생성
+========================= */
+const repoName =
+"vibesites-" + siteName + "-" + Date.now();
 
 const headers = {
 Authorization: `token ${process.env.GITHUB_TOKEN}`,
 "Content-Type": "application/json"
 };
 
-/* 1. repo 생성 */
-await fetch(
-"https://api.github.com/user/repos",
-{
+/* =========================
+   4. GitHub repo 생성
+========================= */
+await fetch("https://api.github.com/user/repos", {
 method: "POST",
 headers,
 body: JSON.stringify({
 name: repoName,
 auto_init: true
 })
-}
-);
+});
 
-/* 2. index.html 업로드 */
+/* =========================
+   5. index.html 업로드
+========================= */
 await fetch(
 `https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${repoName}/contents/index.html`,
 {
@@ -90,12 +129,14 @@ method: "PUT",
 headers,
 body: JSON.stringify({
 message: "auto deploy",
-content: Buffer.from(code).toString("base64")
+content: Buffer.from(html).toString("base64")
 })
 }
 );
 
-/* 3. Pages 활성화 (무시 가능) */
+/* =========================
+   6. Pages (자동 활성 시도)
+========================= */
 try {
 await fetch(
 `https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${repoName}/pages`,
@@ -112,14 +153,19 @@ path: "/"
 );
 } catch (e) {}
 
+/* =========================
+   7. 결과 반환
+========================= */
 res.json({
+name: siteName,
+repo: repoName,
 url: `https://${process.env.GITHUB_USERNAME}.github.io/${repoName}`
 });
 
 } catch (e) {
 
 res.json({
-url: "배포 실패: " + (e?.message || e)
+error: e.message
 });
 
 }
