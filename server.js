@@ -1,34 +1,31 @@
 const fs = require("fs");
 const express = require("express");
+
 const app = express();
 
-app.use(express.json({limit:"10mb"}));
+app.use(express.json({ limit: "10mb" }));
 app.use(express.static("./"));
 
 /* =========================
-   접속 기록 불러오기
+   접속 기록
 ========================= */
 
 let lastSeen = {};
 
 try{
-
-lastSeen = JSON.parse(
+lastSeen=JSON.parse(
 fs.readFileSync(
 "./lastSeen.json",
 "utf8"
 )
 );
-
 }catch{
-
-lastSeen = {};
-
+lastSeen={};
 }
 
 
 /* =========================
-   사이트 생존 신호
+   ping
 ========================= */
 
 app.post("/ping",(req,res)=>{
@@ -50,20 +47,13 @@ null,
 )
 );
 
-console.log(
-"접속:",
-site
-);
-
 }
 
 res.json({
 ok:true
 });
 
-}catch(e){
-
-console.log(e);
+}catch{
 
 res.json({
 ok:false
@@ -75,7 +65,7 @@ ok:false
 
 
 /* =========================
-   AI 생성
+   생성
 ========================= */
 
 app.post("/generate",async(req,res)=>{
@@ -86,16 +76,15 @@ const prompt=req.body.prompt;
 
 const finalPrompt=`
 
-너는 VibeSites AI다.
-
-완전한 HTML 웹사이트 생성
+너는 VibeSites AI
 
 규칙:
-- HTML만 출력
-- style 포함
-- script 포함
-- 설명 금지
-- 모바일 대응
+
+HTML만 출력
+설명 금지
+style 포함
+script 포함
+모바일 대응
 
 요청:
 
@@ -112,20 +101,15 @@ await fetch(
 method:"POST",
 
 headers:{
-"Content-Type":
-"application/json"
+"Content-Type":"application/json"
 },
 
 body:JSON.stringify({
 
 contents:[{
-
 parts:[{
-
 text:finalPrompt
-
 }]
-
 }]
 
 })
@@ -149,9 +133,7 @@ data?.candidates?.[0]
 
 
 
-/* ping 자동삽입 */
-
-code += `
+code+=`
 
 <script>
 
@@ -162,11 +144,11 @@ try{
 await fetch(
 "https://${process.env.RENDER_EXTERNAL_HOSTNAME}/ping",
 {
+
 method:"POST",
 
 headers:{
-"Content-Type":
-"application/json"
+"Content-Type":"application/json"
 },
 
 body:JSON.stringify({
@@ -178,9 +160,10 @@ location.pathname
 })
 
 }
+
 );
 
-}catch(e){}
+}catch{}
 
 })();
 
@@ -194,15 +177,11 @@ code
 
 }catch(e){
 
-console.log(e);
-
 res.json({
-
 code:
-"AI 오류:"
+"AI 오류: "
 +
 String(e)
-
 });
 
 }
@@ -211,7 +190,7 @@ String(e)
 
 
 /* =========================
-   GitHub 배포
+   배포
 ========================= */
 
 app.post("/deploy",async(req,res)=>{
@@ -232,21 +211,23 @@ Authorization:
 
 
 
-/* AI 이름 생성 */
-
 const titlePrompt=`
 
-사이트 이름 생성
+사이트 이름 하나 생성
 
 규칙:
 
 - 영어
 - 소문자
-- 짧게
-- 하이픈 사용
-- 설명 금지
+- 단어1~2개
+- 하이픈 최대1개
+- 설명금지
+- 후보 여러개 금지
+- 이름만 출력
 
 `;
+
+
 
 const titleResponse=
 await fetch(
@@ -254,11 +235,11 @@ await fetch(
 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
 
 {
+
 method:"POST",
 
 headers:{
-"Content-Type":
-"application/json"
+"Content-Type":"application/json"
 },
 
 body:JSON.stringify({
@@ -272,7 +253,7 @@ titlePrompt
 +
 code.substring(
 0,
-300
+200
 )
 
 }]
@@ -285,8 +266,12 @@ code.substring(
 
 );
 
+
+
 const titleData=
 await titleResponse.json();
+
+
 
 let siteName=
 
@@ -294,13 +279,26 @@ titleData?.candidates?.[0]
 ?.content?.parts?.[0]
 ?.text
 
+?.split("\n")[0]
+?.split(",")[0]
+
 ?.trim()
+
 .toLowerCase()
-.replace(/\s/g,"-")
-.replace(/[^a-z0-9-]/g,"");
+
+.replace(/\s+/g,"-")
+.replace(/-+/g,"-")
+.replace(/[^a-z0-9-]/g,"")
+
+.substring(0,30);
 
 
-if(!siteName){
+
+if(
+!siteName
+||
+siteName.length<3
+){
 
 siteName="site";
 
@@ -308,12 +306,13 @@ siteName="site";
 
 
 
-/* 중복 처리 */
+/* 중복 */
 
 let repoName=
 "vibesites-"
 +
 siteName;
+
 
 
 const repoCheck=
@@ -343,7 +342,6 @@ r.name===repoName
 ){
 
 repoName=
-
 "vibesites-"
 +
 siteName
@@ -358,7 +356,7 @@ count++;
 
 
 
-/* 저장소 생성 */
+/* repo 생성 */
 
 await fetch(
 
@@ -384,7 +382,7 @@ auto_init:true
 
 
 
-/* html 업로드 */
+/* html */
 
 await fetch(
 
@@ -435,7 +433,6 @@ body:JSON.stringify({
 source:{
 
 branch:"main",
-
 path:"/"
 
 }
@@ -446,11 +443,9 @@ path:"/"
 
 );
 
-}catch(e){}
+}catch{}
 
 
-
-/* 완료 */
 
 res.json({
 
@@ -461,12 +456,10 @@ url:
 
 }catch(e){
 
-console.log(e);
-
 res.json({
 
 url:
-"배포실패: "
+"배포실패:"
 +
 String(e)
 
@@ -477,9 +470,8 @@ String(e)
 });
 
 
-
 /* =========================
-   3일 자동삭제
+   3일 삭제
 ========================= */
 
 setInterval(async()=>{
@@ -526,30 +518,18 @@ Authorization:
 
 );
 
-console.log(
-site+
-" 삭제완료"
-);
-
 delete lastSeen[site];
 
 fs.writeFileSync(
-
 "./lastSeen.json",
-
 JSON.stringify(
 lastSeen,
 null,
 2
 )
-
 );
 
-}catch(e){
-
-console.log(e);
-
-}
+}catch{}
 
 }
 
@@ -561,14 +541,11 @@ console.log(e);
 
 
 app.listen(
-
 process.env.PORT||3000,
-
 ()=>{
 
 console.log(
 "서버 실행중"
 );
 
-}
-);
+});
