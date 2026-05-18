@@ -1,19 +1,14 @@
-const express = require("express");
-const app = express();
+const fs = require("fs"); const express = require("express"); const app = express();
 
-app.use(express.json());
-app.use(express.static("./"));
+app.use(express.json()); app.use(express.static("./"));
 
-/* =========================
-   사이트 마지막 접속 저장
-========================= */
+/* ========================= 접속 기록 불러오기 ========================= */
 
-const lastSeen = {};
+let lastSeen = {};
 
+try { lastSeen = JSON.parse( fs.readFileSync("./lastSeen.json","utf8") ); } catch { lastSeen = {}; }
 
-/* =========================
-   사이트 생존 신호
-========================= */
+/* ========================= 사이트 생존 신호 ========================= */
 
 app.post("/ping",(req,res)=>{
 
@@ -25,31 +20,23 @@ if(site){
 
 lastSeen[site]=Date.now();
 
-console.log(
-"접속:",
-site
-);
+fs.writeFileSync( "./lastSeen.json", JSON.stringify(lastSeen,null,2) );
+
+console.log("접속:",site);
 
 }
 
-res.json({
-ok:true
-});
+res.json({ok:true});
 
 }catch(e){
 
-res.json({
-ok:false
-});
+res.json({ok:false});
 
 }
 
 });
 
-
-/* =========================
-   AI 생성
-========================= */
+/* ========================= AI 생성 ========================= */
 
 app.post("/generate", async(req,res)=>{
 
@@ -57,110 +44,52 @@ try{
 
 const prompt=req.body.prompt;
 
-const finalPrompt=`
-
-너는 VibeSites AI다.
+const finalPrompt=` 너는 VibeSites AI다.
 
 완전한 HTML 웹사이트를 생성해라.
 
 규칙:
-- HTML만 출력
-- style + script 포함
-- 설명 금지
-- 모바일 대응
 
-요청:
-${prompt}
+HTML만 출력
 
-`;
+style + script 포함
 
-const response=
-await fetch(
+설명 금지
 
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+모바일 대응
 
-{
-method:"POST",
 
-headers:{
-"Content-Type":"application/json"
-},
+요청: ${prompt} `;
 
-body:JSON.stringify({
+const response=await fetch( https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}, { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ contents:[{ parts:[{text:finalPrompt}] }] }) } );
 
-contents:[{
+const data=await response.json();
 
-parts:[{
+let code= data?.candidates?.[0]?.content?.parts?.[0]?.text ||"<h1>생성 실패</h1>";
 
-text:finalPrompt
-
-}]
-
-}]
-
-})
-
-}
-
-);
-
-const data=
-await response.json();
-
-let code=
-
-data?.candidates?.[0]
-?.content?.parts?.[0]
-?.text
-
-||
-
-"<h1>생성 실패</h1>";
-
-code += `
+code+=`
 
 <script>
-fetch("/ping",{
+fetch("https://${process.env.RENDER_EXTERNAL_HOSTNAME}/ping",{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
-site:location.pathname
+site:location.pathname.replace("/","")
 })
 }).catch(()=>{})
-</script>
+</script>`;
 
-`;
-
-res.json({
-code
-});
+res.json({code});
 
 }catch(e){
 
-console.log(
-"AI에러:",
-e
-);
-
-res.json({
-
-code:
-"AI 오류: "
-+
-String(e)
-
-});
+res.json({ code:"AI 오류: "+String(e) });
 
 }
 
 });
 
-
-/* =========================
-   GitHub 배포
-========================= */
+/* ========================= GitHub 배포 ========================= */
 
 app.post("/deploy",async(req,res)=>{
 
@@ -168,289 +97,83 @@ try{
 
 const code=req.body.code;
 
-const headers={
+const headers={ Authorization:token ${process.env.GITHUB_TOKEN}, "Content-Type":"application/json" };
 
-Authorization:
-`token ${process.env.GITHUB_TOKEN}`,
-
-"Content-Type":
-"application/json"
-
-};
-
-
-/* =========================
-   AI 사이트 이름 생성
-========================= */
-
-const titlePrompt=`
-
-사이트 이름 생성
+const titlePrompt=` 사이트 이름 생성
 
 규칙:
-- 영어
-- 소문자
-- 짧게
-- 하이픈 사용 가능
-- 설명 금지
 
-사이트 내용:
+영어
 
-${code.substring(0,300)}
+소문자
 
-`;
+짧게
 
-const titleResponse=
-await fetch(
+하이픈 사용
 
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-
-{
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-contents:[{
-
-parts:[{
-
-text:titlePrompt
-
-}]
-
-}]
-
-})
-
-}
-
-);
-
-const titleData=
-await titleResponse.json();
+설명 금지 `;
 
 
-let siteName=
+const titleResponse=await fetch( https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ contents:[{ parts:[{text:titlePrompt+code.substring(0,300)}] }] }) } );
 
-titleData?.candidates?.[0]
-?.content?.parts?.[0]
-?.text
+const titleData=await titleResponse.json();
 
-?.trim()
-.toLowerCase()
-.replace(/\s/g,"-")
-.replace(/[^a-z0-9-]/g,"");
+let siteName= titleData?.candidates?.[0]?.content?.parts?.[0]?.text ?.trim() .toLowerCase() .replace(/\s/g,"-") .replace(/[^a-z0-9-]/g,"");
 
+if(!siteName) siteName="site";
 
-if(!siteName){
+let repoName="vibesites-"+siteName;
 
-siteName="site";
+const repoCheck=await fetch( "https://api.github.com/user/repos", {headers} );
 
-}
-
-
-/* =========================
-   중복 확인
-========================= */
-
-let repoName=
-"vibesites-"+
-siteName;
-
-
-const repoCheck=
-await fetch(
-"https://api.github.com/user/repos",
-{
-headers
-}
-);
-
-const repoList=
-await repoCheck.json();
-
+const repoList=await repoCheck.json();
 
 let count=1;
 
-while(
+while(repoList.some(r=>r.name===repoName)){ repoName="vibesites-"+siteName+"-"+count; count++; }
 
-repoList.some(
-r=>
-r.name===repoName
-)
+await fetch( "https://api.github.com/user/repos", { method:"POST", headers, body:JSON.stringify({ name:repoName, auto_init:true }) } );
 
-){
+await fetch( https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${repoName}/contents/index.html, { method:"PUT", headers, body:JSON.stringify({ message:"auto deploy", content:Buffer.from(code).toString("base64") }) } );
 
-repoName=
-"vibesites-"
-+
-siteName
-+
-"-"
-+
-count;
+try{ await fetch( https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${repoName}/pages, { method:"POST", headers, body:JSON.stringify({ source:{branch:"main",path:"/"} }) } ) }catch{}
 
-count++;
-
-}
-
-
-/* =========================
-   repo 생성
-========================= */
-
-await fetch(
-"https://api.github.com/user/repos",
-{
-method:"POST",
-headers,
-body:JSON.stringify({
-name:repoName,
-auto_init:true
-})
-}
-);
-
-
-/* =========================
-   html 업로드
-========================= */
-
-await fetch(
-`https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${repoName}/contents/index.html`,
-{
-method:"PUT",
-headers,
-body:JSON.stringify({
-message:"auto deploy",
-content:
-Buffer
-.from(code)
-.toString(
-"base64"
-)
-})
-}
-);
-
-
-/* =========================
-   pages
-========================= */
-
-try{
-
-await fetch(
-
-`https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${repoName}/pages`,
-
-{
-method:"POST",
-
-headers,
-
-body:JSON.stringify({
-
-source:{
-
-branch:"main",
-
-path:"/"
-
-}
-
-})
-
-}
-
-);
-
-}catch(e){}
-
-
-/* =========================
-   완료
-========================= */
-
-res.json({
-
-url:
-`https://${process.env.GITHUB_USERNAME}.github.io/${repoName}`
-
-});
+res.json({ url:https://${process.env.GITHUB_USERNAME}.github.io/${repoName} });
 
 }catch(e){
 
-console.log(
-"배포에러:",
-e
-);
-
-res.json({
-
-url:
-"배포실패: "
-+
-String(e)
-
-});
+res.json({ url:"배포실패: "+String(e) });
 
 }
 
 });
 
+/* ========================= 3일 자동 삭제 ========================= */
 
-/* =========================
-   3일 체크
-========================= */
+setInterval(async()=>{
 
-setInterval(()=>{
+const THREE_DAYS= 32460601000;
 
-const THREE_DAYS=
-3*24*60*60*1000;
+for(const site in lastSeen){
 
-for(
-const site
-in
-lastSeen
-){
+if(Date.now()-lastSeen[site]>THREE_DAYS){
 
-if(
-Date.now()
--
-lastSeen[site]
->
-THREE_DAYS
-){
+try{
 
-console.log(
-site+
-" 삭제대상"
-);
+await fetch( https://api.github.com/repos/${process.env.GITHUB_USERNAME}/${site}, { method:"DELETE", headers:{ Authorization:token ${process.env.GITHUB_TOKEN} } } );
+
+console.log(site+" 삭제완료");
+
+delete lastSeen[site];
+
+fs.writeFileSync( "./lastSeen.json", JSON.stringify(lastSeen,null,2) );
+
+}catch(e){ console.log(e); }
 
 }
 
 }
 
-},
-60*60*1000);
+},60601000);
 
-
-/* =========================
-   실행
-========================= */
-
-app.listen(
-process.env.PORT||3000,
-()=>{
-
-console.log(
-"서버 실행중"
-);
-
-}
-);
+app.listen(process.env.PORT||3000,()=>{ console.log("서버 실행중"); });
