@@ -1,35 +1,474 @@
-<!DOCTYPE html><html lang="ko">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>VibeSite</title>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:monospace}
-body{background:linear-gradient(to bottom right,#f6f0f9,#f0f9f6);color:#3a3a3a;height:100dvh;display:flex;flex-direction:column;overflow:hidden;transition:.3s}
-.top{height:60px;display:flex;align-items:center;padding:0 15px;font-size:24px;font-weight:bold;border-bottom:1px solid #d1a8ff;box-shadow:0 0 10px rgba(209,168,255,.6);background:white;color:#6a5acd}
-.left,.right{border:1px solid #d1a8ff;border-radius:12px;padding:10px;display:flex;flex-direction:column;overflow:hidden;background:white;box-shadow:0 4px 15px rgba(209,168,255,.2)}
-.main{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
-.label{margin-bottom:10px;color:#6a5acd;font-weight:bold}.row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-#input{flex:1;height:50px;padding:10px;border-radius:8px;border:1px solid #d1a8ff}
-button{background:#e0c9ff;border:1px solid #d1a8ff;padding:10px;border-radius:8px;cursor:pointer;color:#6a5acd}
-button:hover{background:#d1a8ff;color:white}
-#code{flex:1;resize:none;padding:10px;border-radius:8px;border:1px solid #d1a8ff}
-iframe{flex:1;border-radius:8px;border:1px solid #d1a8ff;background:white}
-#statusBox,#deployLink{display:none;margin-top:10px;padding:10px;border-radius:8px}
-#statusBox{background:#faf7ff;white-space:pre-line;border:1px solid #d1a8ff}
-#deployLink{background:#f0f8ff;border:1px solid #a8d1ff;word-break:break-all}
-body.dark{background:#000;color:#00ff66}body.dark .top{background:#050505;color:#00ff66;border-bottom:1px solid #00ff66;box-shadow:0 0 10px #00ff66}body.dark .left,body.dark .right{background:#050505;border:1px solid #00ff66}body.dark .label{color:#00ff66}body.dark #input,body.dark #code{background:black;color:#00ff66;border:1px solid #00ff66}body.dark button{background:#001500;color:#00ff66;border:1px solid #00ff66}body.dark iframe{border:1px solid #00ff66}body.dark #statusBox{background:#001500;border:1px solid #00ff66}@media(max-width:768px){.main{grid-template-columns:1fr}}
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:monospace;
+}
+
+body{
+background:linear-gradient(to bottom right,#f6f0f9,#f0f9f6);
+color:#3a3a3a;
+height:100dvh;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+transition:.3s;
+}
+
+.top{
+height:60px;
+display:flex;
+align-items:center;
+padding:0 15px;
+font-size:24px;
+font-weight:bold;
+border-bottom:1px solid #d1a8ff;
+box-shadow:0 0 10px rgba(209,168,255,.6);
+background:white;
+color:#6a5acd;
+}
+
+.left,.right{
+border:1px solid #d1a8ff;
+border-radius:12px;
+padding:10px;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+background:white;
+box-shadow:0 4px 15px rgba(209,168,255,.2);
+}
+
+.main{
+flex:1;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:10px;
+}
+
+.label{
+margin-bottom:10px;
+color:#6a5acd;
+font-weight:bold;
+}
+
+.row{
+display:flex;
+gap:8px;
+margin-bottom:10px;
+flex-wrap:wrap;
+}
+
+#input{
+flex:1;
+height:50px;
+padding:10px;
+border-radius:8px;
+border:1px solid #d1a8ff;
+}
+
+button{
+background:#e0c9ff;
+border:1px solid #d1a8ff;
+padding:10px;
+border-radius:8px;
+cursor:pointer;
+color:#6a5acd;
+}
+
+button:hover{
+background:#d1a8ff;
+color:white;
+}
+
+#code{
+flex:1;
+resize:none;
+padding:10px;
+border-radius:8px;
+border:1px solid #d1a8ff;
+}
+
+iframe{
+flex:1;
+border-radius:8px;
+border:1px solid #d1a8ff;
+background:white;
+}
+
+#statusBox{
+display:none;
+margin-top:10px;
+padding:10px;
+border-radius:8px;
+background:#faf7ff;
+white-space:pre-line;
+border:1px solid #d1a8ff;
+}
+
+#deployLink{
+display:none;
+margin-top:10px;
+padding:10px;
+border-radius:8px;
+background:#f0f8ff;
+border:1px solid #a8d1ff;
+word-break:break-all;
+}
+
+/* 다크모드 */
+
+body.dark{
+background:#000;
+color:#00ff66;
+}
+
+body.dark .top{
+background:#050505;
+color:#00ff66;
+border-bottom:1px solid #00ff66;
+box-shadow:0 0 10px #00ff66;
+}
+
+body.dark .left,
+body.dark .right{
+background:#050505;
+border:1px solid #00ff66;
+}
+
+body.dark .label{
+color:#00ff66;
+}
+
+body.dark #input,
+body.dark #code{
+background:black;
+color:#00ff66;
+border:1px solid #00ff66;
+}
+
+body.dark button{
+background:#001500;
+color:#00ff66;
+border:1px solid #00ff66;
+}
+
+body.dark iframe{
+border:1px solid #00ff66;
+}
+
+body.dark #statusBox{
+background:#001500;
+border:1px solid #00ff66;
+}
+
+@media(max-width:768px){
+.main{
+grid-template-columns:1fr;
+}
+}
 </style>
-</head><body>
-<div class="top"><div>> VibeSite_</div><button id="themeBtn" onclick="toggleTheme()" style="margin-left:auto">🌙</button></div>
-<div class="main"><div class="left"><div class="label">user@vibesite:~$</div><div class="row"><input id="input" placeholder="게임 사이트 만들어줘"><button onclick="generate()">생성</button><button onclick="refreshPreview()">적용</button><button onclick="deploySite()">배포</button></div><textarea id="code" placeholder="AI 코드 수정 가능"></textarea><div id="statusBox"></div><div id="deployLink"></div></div><div class="right"><div class="label">실시간 미리보기</div><iframe id="preview"></iframe></div></div>
+</head>
+
+<body>
+
+<div class="top">
+
+<div>
+> VibeSite_
+</div>
+
+<button
+id="themeBtn"
+onclick="toggleTheme()"
+style="margin-left:auto">
+
+🌙
+
+</button>
+
+</div>
+
+<div class="main">
+
+<div class="left">
+
+<div class="label">
+user@vibesite:~$
+</div>
+
+<div class="row">
+
+<input
+id="input"
+placeholder="게임 사이트 만들어줘">
+
+<button onclick="generate()">
+생성
+</button>
+
+<button onclick="refreshPreview()">
+적용
+</button>
+
+<button onclick="deploySite()">
+배포
+</button>
+
+</div>
+
+<textarea
+id="code"
+placeholder="AI 코드 수정 가능"></textarea>
+
+<div id="statusBox"></div>
+
+<div id="deployLink"></div>
+
+</div>
+
+<div class="right">
+
+<div class="label">
+실시간 미리보기
+</div>
+
+<iframe id="preview"></iframe>
+
+</div>
+
+</div>
+
 <script>
-const input=document.getElementById('input');
-async function generate(){const prompt=input.value.trim();if(!prompt)return;const code=document.getElementById('code');const frames=['🤖 생각중.\n█░░░░░░░','🤖 생각중..\n██░░░░░░','🤖 생각중...\n███░░░░░','🤖 생각중....\n████░░░░','🤖 생각중.....\n█████░░░','🤖 생각중......\n██████░░'];let i=0;const loading=setInterval(()=>{code.value=frames[i%frames.length];i++},180);try{const res=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});const data=await res.json();clearInterval(loading);code.value=data.code;preview.srcdoc=data.code}catch(e){clearInterval(loading);code.value='❌ 오류 발생'}}
-function refreshPreview(){preview.srcdoc=document.getElementById('code').value}
-async function deploySite(){const code=document.getElementById('code').value;if(!code)return;const status=document.getElementById('statusBox');status.style.display='block';status.innerText='🚀 배포 시작...';const steps=['[1/4] 저장소 생성중...','[2/4] HTML 업로드중...','[3/4] GitHub Pages 설정중...'];for(const s of steps){await new Promise(r=>setTimeout(r,500));status.innerText+='\n'+s}const res=await fetch('/deploy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});const data=await res.json();status.innerText+='\n[4/4] 사이트 오픈중...\n\n✅ 배포 완료';deployLink.style.display='block';deployLink.innerHTML=`<a href="${data.url}" target="_blank">${data.url}</a>`}
-function toggleTheme(){document.body.classList.toggle('dark');themeBtn.innerText=document.body.classList.contains('dark')?'☀️':'🌙';localStorage.theme=document.body.classList.contains('dark')?'dark':'light'}
-if(localStorage.theme==='dark'){document.body.classList.add('dark');themeBtn.innerText='☀️'}
-input.addEventListener('keypress',e=>{if(e.key==='Enter')generate()});
-(async()=>{try{await fetch('https://vibesite-oxc9.onrender.com/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({site:location.pathname.replace('/','')})})}catch(e){}})();
-</script></body></html>
+
+const input=
+document.getElementById("input");
+
+async function generate(){
+
+const prompt=input.value.trim();
+
+if(!prompt)return;
+
+const code=
+document.getElementById("code");
+
+code.value="생성중...";
+
+try{
+
+const res=
+await fetch("/generate",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+prompt
+})
+});
+
+const data=
+await res.json();
+
+code.value=data.code;
+
+document
+.getElementById("preview")
+.srcdoc=data.code;
+
+}catch{
+
+code.value=
+"오류 발생";
+
+}
+
+}
+
+function refreshPreview(){
+
+document
+.getElementById(
+"preview"
+)
+.srcdoc=
+
+document
+.getElementById(
+"code"
+)
+.value;
+
+}
+
+async function deploySite(){
+
+const code=
+document
+.getElementById(
+"code"
+)
+.value;
+
+if(!code)return;
+
+const status=
+document
+.getElementById(
+"statusBox"
+);
+
+status.style.display=
+"block";
+
+status.innerText=
+"🚀 배포 시작...\n";
+
+await new Promise(r=>setTimeout(r,500));
+status.innerText+="\n[1/4] 저장소 생성중...";
+
+await new Promise(r=>setTimeout(r,500));
+status.innerText+="\n[2/4] HTML 업로드중...";
+
+await new Promise(r=>setTimeout(r,500));
+status.innerText+="\n[3/4] GitHub Pages 설정중...";
+
+const res=
+await fetch("/deploy",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+code
+})
+});
+
+status.innerText+="\n[4/4] 사이트 오픈중...";
+
+const data=
+await res.json();
+
+status.innerText+="\n\n✅ 배포 완료";
+
+document
+.getElementById(
+"deployLink"
+)
+.style.display=
+"block";
+
+document
+.getElementById(
+"deployLink"
+)
+.innerHTML=
+`
+<a href="${data.url}" target="_blank">
+${data.url}
+</a>
+`;
+
+}
+
+function toggleTheme(){
+
+document.body
+.classList
+.toggle(
+"dark"
+);
+
+const btn=
+document
+.getElementById(
+"themeBtn"
+);
+
+if(
+document.body
+.classList
+.contains(
+"dark"
+)
+){
+
+btn.innerText="☀️";
+
+localStorage.theme=
+"dark";
+
+}else{
+
+btn.innerText="🌙";
+
+localStorage.theme=
+"light";
+
+}
+
+}
+
+if(
+localStorage.theme
+==="dark"
+){
+
+document.body
+.classList.add(
+"dark"
+);
+
+window.onload=()=>{
+
+document
+.getElementById(
+"themeBtn"
+)
+.innerText="☀️";
+
+};
+
+}
+
+input.addEventListener(
+"keypress",
+e=>{
+
+if(e.key==="Enter"){
+generate();
+}
+
+});
+
+(async()=>{
+try{
+await fetch(
+"https://vibesite-oxc9.onrender.com/ping",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+site:
+location.pathname.replace("/","")
+})
+}
+);
+}catch(e){}
+})();
+</script>
+
+</body>
+</html>
