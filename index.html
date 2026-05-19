@@ -3,131 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="google-site-verification" content="uMlBe2tjl3cK0eXkD4dlkfMasM03WFBZX0m20YETotQ" />
 <title>VibeSite</title>
 
 <style>
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:monospace;
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:monospace;
 }
 
 body{
-  background:linear-gradient(to bottom right,#f6f0f9,#f0f9f6);
-  color:#3a3a3a;
-  height:100dvh;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+background:linear-gradient(to bottom right,#f6f0f9,#f0f9f6);
+color:#3a3a3a;
+height:100dvh;
+display:flex;
+flex-direction:column;
+overflow:hidden;
 }
 
 .top{
-  height:60px;
-  display:flex;
-  align-items:center;
-  padding:0 15px;
-  font-size:24px;
-  font-weight:bold;
-  border-bottom:1px solid #d1a8ff;
-  box-shadow:0 0 10px rgba(209,168,255,.6);
-  background:white;
-  color:#6a5acd;
+height:60px;
+display:flex;
+align-items:center;
+padding:0 15px;
+font-size:24px;
+font-weight:bold;
+border-bottom:1px solid #d1a8ff;
+box-shadow:0 0 10px rgba(209,168,255,.6);
+background:white;
+color:#6a5acd;
 }
 
 .main{
-  flex:1;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  padding:10px;
-  overflow:hidden;
+flex:1;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:10px;
+overflow:hidden;
 }
 
 .left,.right{
-  border:1px solid #d1a8ff;
-  border-radius:12px;
-  padding:10px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  background:white;
-  box-shadow:0 4px 15px rgba(209,168,255,.2);
+border:1px solid #d1a8ff;
+border-radius:12px;
+padding:10px;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+background:white;
+box-shadow:0 4px 15px rgba(209,168,255,.2);
 }
 
 .label{
-  margin-bottom:10px;
-  color:#6a5acd;
-  font-weight:bold;
+margin-bottom:10px;
+color:#6a5acd;
+font-weight:bold;
 }
 
 .row{
-  display:flex;
-  gap:8px;
-  margin-bottom:10px;
-  flex-wrap:wrap;
+display:flex;
+gap:8px;
+margin-bottom:10px;
+flex-wrap:wrap;
 }
 
 #input{
-  flex:1;
-  height:50px;
-  background:white;
-  color:#3a3a3a;
-  border:1px solid #d1a8ff;
-  padding:10px;
-  border-radius:8px;
-  outline:none;
+flex:1;
+height:50px;
+background:white;
+color:#3a3a3a;
+border:1px solid #d1a8ff;
+padding:10px;
+border-radius:8px;
+outline:none;
 }
 
 button{
-  background:#e0c9ff;
-  border:1px solid #d1a8ff;
-  color:#6a5acd;
-  padding:10px 15px;
-  border-radius:8px;
-  cursor:pointer;
-  transition:.2s;
+background:#e0c9ff;
+border:1px solid #d1a8ff;
+color:#6a5acd;
+padding:10px 15px;
+border-radius:8px;
+cursor:pointer;
 }
 
 button:hover{
-  box-shadow:0 0 15px rgba(209,168,255,.8);
-  background:#d1a8ff;
-  color:white;
+box-shadow:0 0 15px rgba(209,168,255,.8);
+background:#d1a8ff;
+color:white;
 }
 
 #code{
-  flex:1;
-  background:white;
-  color:#3a3a3a;
-  border:1px solid #d1a8ff;
-  padding:10px;
-  border-radius:8px;
-  resize:none;
-  width:100%;
+flex:1;
+background:white;
+color:#3a3a3a;
+border:1px solid #d1a8ff;
+padding:10px;
+border-radius:8px;
+resize:none;
+width:100%;
 }
 
 iframe{
-  flex:1;
-  width:100%;
-  border:1px solid #d1a8ff;
-  background:white;
-  border-radius:8px;
+flex:1;
+width:100%;
+border:1px solid #d1a8ff;
+background:white;
+border-radius:8px;
+}
+
+#statusBox{
+display:none;
+margin-top:10px;
+padding:10px;
+border:1px solid #d1a8ff;
+border-radius:8px;
+background:#faf7ff;
+white-space:pre-line;
+color:#6a5acd;
 }
 
 #deployLink{
-  margin-top:10px;
-  padding:10px;
-  border:1px solid #a8d1ff;
-  background:#f0f8ff;
-  color:#4169e1;
-  display:none;
-  word-break:break-all;
-  border-radius:8px;
+margin-top:10px;
+padding:10px;
+border:1px solid #a8d1ff;
+background:#f0f8ff;
+display:none;
+border-radius:8px;
+word-break:break-all;
 }
 
 a{
-  color:#9966ff;
+color:#9966ff;
 }
 
 @media(max-width:768px){
@@ -178,8 +186,9 @@ placeholder="게임 사이트 만들어줘">
 
 <textarea
 id="code"
-placeholder="AI 코드 수정 가능">
-</textarea>
+placeholder="AI 코드 수정 가능"></textarea>
+
+<div id="statusBox"></div>
 
 <div id="deployLink"></div>
 
@@ -200,7 +209,9 @@ placeholder="AI 코드 수정 가능">
 <script>
 
 const input=
-document.getElementById("input");
+document.getElementById(
+"input"
+);
 
 async function generate(){
 
@@ -210,7 +221,9 @@ input.value.trim();
 if(!prompt)return;
 
 const code=
-document.getElementById("code");
+document.getElementById(
+"code"
+);
 
 code.value=
 "생성중...";
@@ -218,19 +231,23 @@ code.value=
 try{
 
 const res=
-await fetch("/generate",{
-
+await fetch(
+"/generate",
+{
 method:"POST",
 
 headers:{
-"Content-Type":"application/json"
+"Content-Type":
+"application/json"
 },
 
-body:JSON.stringify({
+body:
+JSON.stringify({
 prompt
 })
 
-});
+}
+);
 
 const data=
 await res.json();
@@ -239,7 +256,9 @@ code.value=
 data.code;
 
 document
-.getElementById("preview")
+.getElementById(
+"preview"
+)
 .srcdoc=
 data.code;
 
@@ -255,11 +274,15 @@ code.value=
 function refreshPreview(){
 
 document
-.getElementById("preview")
+.getElementById(
+"preview"
+)
 .srcdoc=
 
 document
-.getElementById("code")
+.getElementById(
+"code"
+)
 .value;
 
 }
@@ -268,37 +291,59 @@ async function deploySite(){
 
 const code=
 document
-.getElementById("code")
+.getElementById(
+"code"
+)
 .value;
 
 if(!code)return;
 
+const status=
+document
+.getElementById(
+"statusBox"
+);
+
+status.style.display=
+"block";
+
+status.innerText=
+"🚀 배포 시작...\n";
+
+await new Promise(r=>setTimeout(r,500));
+status.innerText+="\n[1/4] 저장소 생성중...";
+
+await new Promise(r=>setTimeout(r,500));
+status.innerText+="\n[2/4] HTML 업로드중...";
+
+await new Promise(r=>setTimeout(r,500));
+status.innerText+="\n[3/4] GitHub Pages 설정중...";
+
 const res=
-await fetch("/deploy",{
-
+await fetch(
+"/deploy",
+{
 method:"POST",
-
 headers:{
 "Content-Type":"application/json"
 },
-
 body:JSON.stringify({
 code
 })
+}
+);
 
-});
+status.innerText+="\n[4/4] 사이트 오픈중...";
 
 const data=
 await res.json();
 
-try{
+status.innerText+="\n\n✅ 배포 완료";
 
-await navigator
-.clipboard
-.writeText(
+try{
+await navigator.clipboard.writeText(
 data.url
 );
-
 }catch{}
 
 const box=
@@ -310,22 +355,19 @@ document
 box.style.display=
 "block";
 
-box.innerHTML=`
-
+box.innerHTML=
+`
 배포 완료 🎉
 <br><br>
 
 <a href="${data.url}"
 target="_blank">
-
 ${data.url}
-
 </a>
 
 <br><br>
 
 (링크 자동 복사됨)
-
 `;
 
 }
@@ -344,36 +386,24 @@ generate();
 
 </script>
 
-
 <script>
-
 (async()=>{
-
 try{
-
 await fetch(
 "https://vibesite-oxc9.onrender.com/ping",
 {
 method:"POST",
-
 headers:{
 "Content-Type":"application/json"
 },
-
 body:JSON.stringify({
-
 site:
 location.pathname.replace("/","")
-
 })
-
 }
 );
-
 }catch(e){}
-
 })();
-
 </script>
 
 </body>
