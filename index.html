@@ -20,6 +20,7 @@ height:100dvh;
 display:flex;
 flex-direction:column;
 overflow:hidden;
+transition:.3s;
 }
 
 .top{
@@ -35,15 +36,6 @@ background:white;
 color:#6a5acd;
 }
 
-.main{
-flex:1;
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-padding:10px;
-overflow:hidden;
-}
-
 .left,.right{
 border:1px solid #d1a8ff;
 border-radius:12px;
@@ -53,6 +45,14 @@ flex-direction:column;
 overflow:hidden;
 background:white;
 box-shadow:0 4px 15px rgba(209,168,255,.2);
+}
+
+.main{
+flex:1;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:10px;
 }
 
 .label{
@@ -71,80 +71,109 @@ flex-wrap:wrap;
 #input{
 flex:1;
 height:50px;
-background:white;
-color:#3a3a3a;
-border:1px solid #d1a8ff;
 padding:10px;
 border-radius:8px;
-outline:none;
+border:1px solid #d1a8ff;
 }
 
 button{
 background:#e0c9ff;
 border:1px solid #d1a8ff;
-color:#6a5acd;
-padding:10px 15px;
+padding:10px;
 border-radius:8px;
 cursor:pointer;
+color:#6a5acd;
 }
 
 button:hover{
-box-shadow:0 0 15px rgba(209,168,255,.8);
 background:#d1a8ff;
 color:white;
 }
 
 #code{
 flex:1;
-background:white;
-color:#3a3a3a;
-border:1px solid #d1a8ff;
+resize:none;
 padding:10px;
 border-radius:8px;
-resize:none;
-width:100%;
+border:1px solid #d1a8ff;
 }
 
 iframe{
 flex:1;
-width:100%;
+border-radius:8px;
 border:1px solid #d1a8ff;
 background:white;
-border-radius:8px;
 }
 
 #statusBox{
 display:none;
 margin-top:10px;
 padding:10px;
-border:1px solid #d1a8ff;
 border-radius:8px;
 background:#faf7ff;
 white-space:pre-line;
-color:#6a5acd;
+border:1px solid #d1a8ff;
 }
 
 #deployLink{
+display:none;
 margin-top:10px;
 padding:10px;
-border:1px solid #a8d1ff;
-background:#f0f8ff;
-display:none;
 border-radius:8px;
+background:#f0f8ff;
+border:1px solid #a8d1ff;
 word-break:break-all;
 }
 
-a{
-color:#9966ff;
+/* 다크모드 */
+
+body.dark{
+background:#000;
+color:#00ff66;
+}
+
+body.dark .top{
+background:#050505;
+color:#00ff66;
+border-bottom:1px solid #00ff66;
+box-shadow:0 0 10px #00ff66;
+}
+
+body.dark .left,
+body.dark .right{
+background:#050505;
+border:1px solid #00ff66;
+}
+
+body.dark .label{
+color:#00ff66;
+}
+
+body.dark #input,
+body.dark #code{
+background:black;
+color:#00ff66;
+border:1px solid #00ff66;
+}
+
+body.dark button{
+background:#001500;
+color:#00ff66;
+border:1px solid #00ff66;
+}
+
+body.dark iframe{
+border:1px solid #00ff66;
+}
+
+body.dark #statusBox{
+background:#001500;
+border:1px solid #00ff66;
 }
 
 @media(max-width:768px){
 .main{
 grid-template-columns:1fr;
-}
-.top{
-font-size:18px;
-height:55px;
 }
 }
 </style>
@@ -153,7 +182,20 @@ height:55px;
 <body>
 
 <div class="top">
+
+<div>
 > VibeSite_
+</div>
+
+<button
+id="themeBtn"
+onclick="toggleTheme()"
+style="margin-left:auto">
+
+🌙
+
+</button>
+
 </div>
 
 <div class="main">
@@ -209,58 +251,40 @@ placeholder="AI 코드 수정 가능"></textarea>
 <script>
 
 const input=
-document.getElementById(
-"input"
-);
+document.getElementById("input");
 
 async function generate(){
 
-const prompt=
-input.value.trim();
+const prompt=input.value.trim();
 
 if(!prompt)return;
 
 const code=
-document.getElementById(
-"code"
-);
+document.getElementById("code");
 
-code.value=
-"생성중...";
+code.value="생성중...";
 
 try{
 
 const res=
-await fetch(
-"/generate",
-{
+await fetch("/generate",{
 method:"POST",
-
 headers:{
-"Content-Type":
-"application/json"
+"Content-Type":"application/json"
 },
-
-body:
-JSON.stringify({
+body:JSON.stringify({
 prompt
 })
-
-}
-);
+});
 
 const data=
 await res.json();
 
-code.value=
-data.code;
+code.value=data.code;
 
 document
-.getElementById(
-"preview"
-)
-.srcdoc=
-data.code;
+.getElementById("preview")
+.srcdoc=data.code;
 
 }catch{
 
@@ -320,9 +344,7 @@ await new Promise(r=>setTimeout(r,500));
 status.innerText+="\n[3/4] GitHub Pages 설정중...";
 
 const res=
-await fetch(
-"/deploy",
-{
+await fetch("/deploy",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
@@ -330,8 +352,7 @@ headers:{
 body:JSON.stringify({
 code
 })
-}
-);
+});
 
 status.innerText+="\n[4/4] 사이트 오픈중...";
 
@@ -340,35 +361,83 @@ await res.json();
 
 status.innerText+="\n\n✅ 배포 완료";
 
-try{
-await navigator.clipboard.writeText(
-data.url
-);
-}catch{}
-
-const box=
 document
 .getElementById(
 "deployLink"
-);
-
-box.style.display=
+)
+.style.display=
 "block";
 
-box.innerHTML=
+document
+.getElementById(
+"deployLink"
+)
+.innerHTML=
 `
-배포 완료 🎉
-<br><br>
-
-<a href="${data.url}"
-target="_blank">
+<a href="${data.url}" target="_blank">
 ${data.url}
 </a>
-
-<br><br>
-
-(링크 자동 복사됨)
 `;
+
+}
+
+function toggleTheme(){
+
+document.body
+.classList
+.toggle(
+"dark"
+);
+
+const btn=
+document
+.getElementById(
+"themeBtn"
+);
+
+if(
+document.body
+.classList
+.contains(
+"dark"
+)
+){
+
+btn.innerText="☀️";
+
+localStorage.theme=
+"dark";
+
+}else{
+
+btn.innerText="🌙";
+
+localStorage.theme=
+"light";
+
+}
+
+}
+
+if(
+localStorage.theme
+==="dark"
+){
+
+document.body
+.classList.add(
+"dark"
+);
+
+window.onload=()=>{
+
+document
+.getElementById(
+"themeBtn"
+)
+.innerText="☀️";
+
+};
 
 }
 
@@ -376,17 +445,12 @@ input.addEventListener(
 "keypress",
 e=>{
 
-if(
-e.key==="Enter"
-){
+if(e.key==="Enter"){
 generate();
 }
 
 });
 
-</script>
-
-<script>
 (async()=>{
 try{
 await fetch(
